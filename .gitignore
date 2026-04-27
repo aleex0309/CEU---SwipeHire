@@ -1,0 +1,22 @@
+## macOS
+.DS_Store
+
+## Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+## Jupyter
+.ipynb_checkpoints/
+
+## Node / frontend build artifacts
+swipehire/node_modules/
+swipehire/dist/
+swipehire/.astro/
+swipehire/.vercel/
+
+## Logs
+*.log

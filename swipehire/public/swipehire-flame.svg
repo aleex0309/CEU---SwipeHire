@@ -1,0 +1,13 @@
+<svg width="256" height="256" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="swipehireFlame" x1="76" y1="52" x2="244" y2="278" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6"/>
+      <stop offset="0.52" stop-color="#EC4899"/>
+      <stop offset="1" stop-color="#FB7185"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(28 28)">
+    <path d="M134 18c14 24 20 47 19 69-1 20-9 38-25 53-22 22-50 33-74 57-23 22-33 54-26 86 8 36 38 65 75 72 43 8 89-10 111-49 22-37 22-87 6-126-16-38-45-69-86-100z" fill="url(#swipehireFlame)"/>
+    <path d="M106 122c12-8 20-18 24-31 4 11 2 21-5 31-7 10-18 18-31 24 2-9 6-17 12-24z" fill="#F8FAFC" fill-opacity="0.3"/>
+  </g>
+</svg>
