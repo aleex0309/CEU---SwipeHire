@@ -13,10 +13,27 @@ venv/
 .ipynb_checkpoints/
 
 ## Node / frontend build artifacts
+node_modules/
+dist/
+.astro/
+.vercel/
 swipehire/node_modules/
 swipehire/dist/
 swipehire/.astro/
 swipehire/.vercel/
 
-## Logs
+## JS package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## Environment variables
+.env
+.env.production
+
+## IDE
+.idea/
+
+## Generic logs
 *.log
