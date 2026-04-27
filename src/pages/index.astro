@@ -1,11 +1,168 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Hero from '../components/Hero';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="SwipeHire | Hiring sucks. Swipe better.">
+  <div class="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(99,102,241,0.18),transparent_35%),radial-gradient(circle_at_80%_5%,rgba(34,197,94,0.12),transparent_30%)]" />
+    <div class="flame-field" aria-hidden="true">
+      <img src="/image.png" alt="" class="flame flame-a" />
+      <img src="/image.png" alt="" class="flame flame-b" />
+      <img src="/image.png" alt="" class="flame flame-c" />
+      <img src="/image.png" alt="" class="flame flame-d" />
+      <img src="/image.png" alt="" class="flame flame-e" />
+      <img src="/image.png" alt="" class="flame flame-f" />
+      <img src="/image.png" alt="" class="flame flame-g" />
+      <img src="/image.png" alt="" class="flame flame-h" />
+      <img src="/image.png" alt="" class="flame flame-i" />
+      <img src="/image.png" alt="" class="flame flame-j" />
+      <img src="/image.png" alt="" class="flame flame-k" />
+      <img src="/image.png" alt="" class="flame flame-l" />
+    </div>
+
+    <div class="relative z-10">
+      <Hero client:load />
+
+      <section class="mx-auto grid w-full max-w-6xl gap-6 px-6 py-14 md:grid-cols-3">
+      <article class="rounded-3xl border border-slate-800 bg-slate-900/65 p-6">
+        <p class="text-xs uppercase tracking-widest text-slate-400">Step 1</p>
+        <h3 class="mt-2 text-lg font-bold text-white">Add your role</h3>
+        <p class="mt-2 text-sm text-slate-300">Paste the job offer and let SwipeHire extract what matters.</p>
+      </article>
+      <article class="rounded-3xl border border-slate-800 bg-slate-900/65 p-6">
+        <p class="text-xs uppercase tracking-widest text-slate-400">Step 2</p>
+        <h3 class="mt-2 text-lg font-bold text-white">Drop candidate CVs</h3>
+        <p class="mt-2 text-sm text-slate-300">Feed one CV or a whole batch. We score and rank instantly.</p>
+      </article>
+      <article class="rounded-3xl border border-slate-800 bg-slate-900/65 p-6">
+        <p class="text-xs uppercase tracking-widest text-slate-400">Step 3</p>
+        <h3 class="mt-2 text-lg font-bold text-white">Swipe with intent</h3>
+        <p class="mt-2 text-sm text-slate-300">Right for yes. Left for no. Recruiters deserve velocity too.</p>
+      </article>
+      </section>
+
+      <section class="mx-auto w-full max-w-6xl px-6 py-10">
+      <h2 class="text-3xl font-black text-white">Why SwipeHire</h2>
+      <div class="mt-6 grid gap-5 md:grid-cols-3">
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/65 p-5">
+          <p class="text-lg font-bold text-indigo-300">Speed</p>
+          <p class="mt-2 text-sm text-slate-300">Review high-fit candidates in minutes, not days.</p>
+        </div>
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/65 p-5">
+          <p class="text-lg font-bold text-indigo-300">AI-Style Matching</p>
+          <p class="mt-2 text-sm text-slate-300">Lightweight NLP scoring highlights relevant profiles first.</p>
+        </div>
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/65 p-5">
+          <p class="text-lg font-bold text-indigo-300">UX Recruiters Love</p>
+          <p class="mt-2 text-sm text-slate-300">Tinder-grade gestures with enterprise-grade outcomes.</p>
+        </div>
+      </div>
+      </section>
+
+      <section class="mx-auto w-full max-w-6xl px-6 py-10">
+      <div class="rounded-[2rem] border border-slate-800 bg-slate-900/60 p-8">
+        <h2 class="text-3xl font-black text-white">What Tinder-style UX gets right</h2>
+        <ul class="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+          <li class="rounded-xl border border-slate-700 bg-slate-950/70 p-4">One-card-at-a-time flow reduces cognitive overload and makes decisions faster.</li>
+          <li class="rounded-xl border border-slate-700 bg-slate-950/70 p-4">Direct manipulation (dragging cards) improves clarity versus abstract button-only decisions.</li>
+          <li class="rounded-xl border border-slate-700 bg-slate-950/70 p-4">Micro-feedback (LIKE/NOPE stamps, tilt, spring back) improves confidence in user intent.</li>
+          <li class="rounded-xl border border-slate-700 bg-slate-950/70 p-4">Risk: excessive swiping can increase choice overload, so SwipeHire keeps decks purpose-driven.</li>
+        </ul>
+        <p class="mt-3 text-xs text-slate-500">
+          Inspiration synthesized from interaction pattern analyses and decision-making studies on swipe interfaces.
+        </p>
+      </div>
+      </section>
+
+      <section class="mx-auto w-full max-w-6xl px-6 py-10">
+      <div class="rounded-[2rem] border border-slate-800 bg-slate-900/60 p-8">
+        <h2 class="text-3xl font-black text-white">Demo Preview</h2>
+        <p class="mt-2 max-w-2xl text-slate-300">
+          Explore the full swipe experience, score CVs against a real role description, and build a shortlist worth contacting.
+        </p>
+        <a
+          href="/swipe"
+          class="mt-6 inline-flex rounded-2xl bg-indigo-500 px-5 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-indigo-400"
+        >
+          Launch Swipe Demo
+        </a>
+      </div>
+      </section>
+
+      <section class="mx-auto w-full max-w-6xl px-6 py-16">
+      <div class="rounded-[2rem] border border-indigo-500/40 bg-indigo-500/10 p-8 text-center">
+        <h2 class="text-3xl font-black text-white">Ready to date your next top hire?</h2>
+        <p class="mx-auto mt-3 max-w-2xl text-slate-300">
+          Give your recruiting workflow the swipe treatment and stop spending hours in CV fatigue mode.
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            href="/app"
+            class="inline-flex rounded-2xl bg-indigo-500 px-5 py-3 font-semibold text-white transition hover:bg-indigo-400"
+          >
+            Start Swiping
+          </a>
+          <a
+            href="/app"
+            class="inline-flex rounded-2xl border border-slate-600 bg-slate-900 px-5 py-3 font-semibold text-slate-100 transition hover:bg-slate-800"
+          >
+            Upload CVs
+          </a>
+        </div>
+      </div>
+      </section>
+    </div>
+  </div>
 </Layout>
+
+<style>
+  .flame-field {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .flame {
+    position: absolute;
+    bottom: -10rem;
+    opacity: 0;
+    filter: blur(0.3px);
+    animation-name: floatFlame;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .flame-a { left: 4%; width: 52px; animation-duration: 22s; animation-delay: -2s; }
+  .flame-b { left: 12%; width: 46px; animation-duration: 28s; animation-delay: -11s; }
+  .flame-c { left: 21%; width: 58px; animation-duration: 26s; animation-delay: -6s; }
+  .flame-d { left: 31%; width: 50px; animation-duration: 24s; animation-delay: -15s; }
+  .flame-e { left: 40%; width: 44px; animation-duration: 30s; animation-delay: -4s; }
+  .flame-f { left: 50%; width: 55px; animation-duration: 27s; animation-delay: -18s; }
+  .flame-g { left: 59%; width: 48px; animation-duration: 25s; animation-delay: -9s; }
+  .flame-h { left: 68%; width: 42px; animation-duration: 29s; animation-delay: -21s; }
+  .flame-i { left: 77%; width: 56px; animation-duration: 23s; animation-delay: -7s; }
+  .flame-j { left: 85%; width: 47px; animation-duration: 31s; animation-delay: -13s; }
+  .flame-k { left: 92%; width: 43px; animation-duration: 26s; animation-delay: -19s; }
+  .flame-l { left: 96%; width: 40px; animation-duration: 33s; animation-delay: -5s; }
+
+  @keyframes floatFlame {
+    0% {
+      transform: translate3d(0, 0, 0) scale(0.92);
+      opacity: 0;
+    }
+    12% {
+      opacity: 0.08;
+    }
+    55% {
+      transform: translate3d(10px, -58vh, 0) scale(1);
+      opacity: 0.12;
+    }
+    100% {
+      transform: translate3d(-8px, -145vh, 0) scale(1.08);
+      opacity: 0;
+    }
+  }
+</style>
