@@ -151,62 +151,9 @@ Collaboration: Worked closely with engineering and product managers on deploymen
 Experience: Senior Cloud Engineer at NexaDeploy (2022–present) — AWS infrastructure for HR SaaS, Node.js microservices. Platform Engineer at CloudBase (2019–2022) — GCP deployments, Docker orchestration for recruitment software.`,
 
   // ── 5. Moderate match ─────────────────────────────────────────────────────
-  `Amina Yusuf
-Software Engineer
-4 years experience | Seville, Spain
-Profile: Software engineer with 4 years working in JavaScript, React and basic Node.js. Experience building internal tools and moderate cloud exposure on AWS. Comfortable working with product and recruiting teams in fast-paced environments.
-Technical Skills: React, JavaScript, TypeScript (basic), Node.js, Express, MySQL, basic AWS (S3), Git, Agile/Scrum
-Collaboration: Participated in cross-functional teams with product managers and HR coordinators. Decent communication skills and experience presenting work in sprint reviews.
-Experience: Software Engineer at InternalTools Co (2022–present) — React dashboards and Node/Express APIs for HR operations. Junior Developer at WebStart (2020–2022) — JavaScript and basic React projects.
-Note: Looking to deepen TypeScript and cloud deployment skills.`,
+  `Pietro Sanchiez
+Full Stack Developer
+4 years experience | La Moncloa
+Profile: Son las 17 y todavía no he comido`,
 
-  // ── 6. Moderate match ─────────────────────────────────────────────────────
-  `Luca Moretti
-Backend Developer
-5 years experience | Bilbao, Spain
-Profile: Backend-focused developer with 5 years in Node.js, Express, REST API design and SQL databases. Good understanding of Docker and basic cloud services. Minimal frontend work but comfortable reading React code. Worked occasionally with product and HR stakeholders.
-Technical Skills: Node.js, Express, TypeScript (backend), PostgreSQL, MySQL, Docker, REST APIs, Redis, basic AWS, Git, Mocha/Jest
-Collaboration: Collaborated with product managers to define API contracts. Occasional communication with HR teams to understand workflow requirements. Written documentation and onboarding guides.
-Experience: Senior Backend Developer at APIcraft (2021–present) — Node.js REST APIs and PostgreSQL for HR platform backend. Backend Engineer at DataServe (2019–2021) — Express services and database design.
-Note: Limited React or frontend deployment experience; prefers backend and API work.`,
-
-  // ── 7. Weak match ─────────────────────────────────────────────────────────
-  `Sofia Marin
-Data Analyst
-4 years experience | Madrid, Spain
-Profile: Data analyst with 4 years of experience in Python, SQL and business intelligence dashboards. Built reporting tools for HR and talent acquisition teams. Good communication and stakeholder management but no hands-on React, TypeScript or cloud deployment experience.
-Technical Skills: Python (pandas, numpy, matplotlib), SQL, Tableau, Power BI, Excel, dbt, Looker, basic statistics
-Communication: Strong written and verbal communication. Presented monthly hiring funnel reports to HR leadership. Worked closely with talent acquisition to understand recruiting KPIs.
-Experience: Senior Data Analyst at PeopleMetrics (2022–present) — built hiring analytics dashboards for talent teams. Data Analyst at Insights Ltd (2020–2022) — SQL reports and Python pipelines for HR operations.
-Note: No software engineering background; transitioning towards data engineering.`,
-
-  // ── 8. Weak match ─────────────────────────────────────────────────────────
-  `James Park
-Machine Learning Engineer
-6 years experience | Barcelona, Spain
-Profile: Machine learning engineer with 6 years in Python, NLP, deep learning and MLOps. Experienced in building recommendation and screening systems using transformer models (BERT, sentence-transformers). Strong technical depth but limited product engineering stack and minimal React or TypeScript work.
-Technical Skills: Python, PyTorch, TensorFlow, scikit-learn, sentence-transformers, BERT, NLP, MLflow, Docker, AWS SageMaker, FastAPI, SQL
-Communication: Collaborated with data science teams and product managers on ML product features. Some experience explaining ML outputs to non-technical stakeholders in HR.
-Experience: Senior ML Engineer at AI Talent (2021–present) — NLP models for candidate screening and resume ranking. ML Engineer at DeepHire (2018–2021) — recommendation systems for job matching.
-Note: Interested in transitioning to a more product-engineering oriented role.`,
-
-  // ── 9. Low match ──────────────────────────────────────────────────────────
-  `Anna Fischer
-QA Automation Engineer
-3 years experience | Remote (EU)
-Profile: QA engineer with 3 years of experience in test automation using Cypress and Playwright. Strong in defining test strategies and quality processes. Limited cloud architecture ownership and no TypeScript-heavy product delivery or frontend development.
-Technical Skills: Cypress, Playwright, Selenium, JavaScript (test scripts), Postman, REST API testing, JIRA, TestRail, CI/CD (basic), Git
-Collaboration: Good team player and communicator. Worked with developers and product managers to define acceptance criteria. Some experience with HR software quality testing.
-Experience: QA Engineer at SoftTest (2023–present) — automated test suites for web platforms. Junior QA at QualityFirst (2021–2023) — manual and basic automated testing.
-Note: Does not have experience in software development, cloud deployment, or React/TypeScript engineering.`,
-
-  // ── 10. Very low match ────────────────────────────────────────────────────
-  `Carlos Reyes
-IT Support Specialist
-2 years experience | Madrid, Spain
-Profile: IT support specialist with 2 years of experience in systems administration, helpdesk support and end-user training. Strong communication and problem-solving skills but no background in modern web development, cloud architecture, React, TypeScript, Node.js or product engineering.
-Technical Skills: Windows Server, Active Directory, Office 365, ticketing systems (ServiceNow, Zendesk), basic networking, hardware troubleshooting, end-user support
-Communication: Excellent customer-facing communication. Trained users on software tools and documented IT procedures. Responsive and organised in high-volume support environments.
-Experience: IT Support Specialist at TechDesk (2024–present) — level 2 support, network administration. IT Helpdesk Technician at SupportCo (2022–2024) — user support, hardware setup, ticket management.
-Note: Looking to grow into a software development role; currently self-studying Python.`,
 ];
