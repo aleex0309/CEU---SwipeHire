@@ -42,7 +42,10 @@ export default function SwipeCard({
   nopeOpacity,
   showStamps = true,
 }: SwipeCardProps) {
-  const { matchScore, scoreBreakdown, matchedKeywords, scoredByAI } = candidate;
+  const matchScore = Number.isFinite(candidate.matchScore)
+    ? candidate.matchScore
+    : Math.max(0, Math.min(100, Math.round(Number((candidate as Candidate & { score?: number }).score) || 0)));
+  const { scoreBreakdown, matchedKeywords, scoredByAI, explanation } = candidate;
 
   const badgeClass =
     matchScore >= 70
@@ -121,6 +124,25 @@ export default function SwipeCard({
               value={scoreBreakdown.keywordCoverage}
               colorClass="bg-emerald-400"
             />
+            <p className="pt-1 text-[10px] leading-relaxed text-slate-400">
+              Final match score combines semantic similarity and keyword coverage for an explainable rank.
+            </p>
+          </div>
+        )}
+
+        {scoredByAI && (
+          <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/10 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-indigo-300">
+              SBERT Detail
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-indigo-100/90">
+              Semantic: {Math.round(scoreBreakdown?.semantic ?? matchScore)}% · Keyword: {Math.round(scoreBreakdown?.keywordCoverage ?? 0)}%
+            </p>
+            {explanation && (
+              <p className="mt-1 text-[10px] leading-relaxed text-indigo-100/80 line-clamp-3">
+                {explanation}
+              </p>
+            )}
           </div>
         )}
 

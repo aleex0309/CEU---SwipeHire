@@ -55,13 +55,19 @@ function Chip({
 
 export default function MatchResults({ likedCandidates, onRestart }: MatchResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const getMatchScore = (candidate: Candidate & { score?: unknown; match_score?: unknown }) => {
+    const numeric = Number(candidate.matchScore ?? candidate.match_score ?? candidate.score);
+    if (!Number.isFinite(numeric)) return 0;
+    if (numeric <= 1) return Math.round(numeric * 100);
+    return Math.max(0, Math.min(100, Math.round(numeric)));
+  };
 
   const download = () => {
     const payload = likedCandidates.map((c) => ({
       id: c.id,
       name: c.name,
       role: c.role,
-      matchScore: c.matchScore,
+      matchScore: getMatchScore(c),
       scoredByAI: c.scoredByAI ?? false,
       scoreBreakdown: c.scoreBreakdown,
       matchedKeywords: c.matchedKeywords,
@@ -95,11 +101,12 @@ export default function MatchResults({ likedCandidates, onRestart }: MatchResult
       ) : (
         <ul className="mt-6 space-y-5">
           {likedCandidates.map((c) => {
+            const matchScore = getMatchScore(c);
             const expanded = expandedId === c.id;
             const matchBg =
-              c.matchScore >= 70
+              matchScore >= 70
                 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                : c.matchScore >= 45
+                : matchScore >= 45
                   ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                   : 'border-rose-500/30 bg-rose-500/10 text-rose-300';
 
@@ -112,7 +119,7 @@ export default function MatchResults({ likedCandidates, onRestart }: MatchResult
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4">
                   <div className="flex items-center gap-3">
                     <span className={`rounded-xl border px-3 py-1 text-sm font-bold ${matchBg}`}>
-                      {c.matchScore}%
+                      {matchScore}%
                     </span>
                     <div>
                       <p className="font-semibold text-white">{c.name}</p>
