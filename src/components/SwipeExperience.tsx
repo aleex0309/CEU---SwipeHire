@@ -1,32 +1,49 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Candidate } from '../types';
-import { SWIPEHIRE_CANDIDATES_KEY, SWIPEHIRE_LIKED_KEY } from '../lib/storage';
+import {
+  SWIPEHIRE_CANDIDATES_KEY,
+  SWIPEHIRE_JOB_OFFER_KEY,
+  SWIPEHIRE_LIKED_KEY,
+} from '../lib/storage';
 import SwipeCardStack from './SwipeCardStack';
 import MatchResults from './MatchResults';
+
+const toPercentScore = (value: unknown): number => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  if (numeric <= 1) return Math.round(numeric * 100);
+  return Math.max(0, Math.min(100, Math.round(numeric)));
+};
+
+const normalizeCandidate = (raw: Candidate & { score?: unknown; match_score?: unknown }): Candidate => ({
+  ...raw,
+  matchScore: toPercentScore(raw.matchScore ?? raw.match_score ?? raw.score),
+});
 
 export default function SwipeExperience() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [likedCandidates, setLikedCandidates] = useState<Candidate[]>([]);
   const [discardedCandidates, setDiscardedCandidates] = useState<Candidate[]>([]);
+  const [jobOffer, setJobOffer] = useState('');
 
   useEffect(() => {
     const deck = localStorage.getItem(SWIPEHIRE_CANDIDATES_KEY);
-    const liked = localStorage.getItem(SWIPEHIRE_LIKED_KEY);
+    const storedJobOffer = localStorage.getItem(SWIPEHIRE_JOB_OFFER_KEY);
 
     if (deck) {
       try {
-        setCandidates(JSON.parse(deck));
+        const parsed = JSON.parse(deck) as Array<Candidate & { score?: unknown; match_score?: unknown }>;
+        setCandidates(parsed.map(normalizeCandidate));
       } catch {
         localStorage.removeItem(SWIPEHIRE_CANDIDATES_KEY);
       }
     }
-    if (liked) {
-      try {
-        setLikedCandidates(JSON.parse(liked));
-      } catch {
-        localStorage.removeItem(SWIPEHIRE_LIKED_KEY);
-      }
-    }
+    if (storedJobOffer) setJobOffer(storedJobOffer);
+
+    // Always start a fresh swipe session (no restore from prior likes/discards).
+    setLikedCandidates([]);
+    setDiscardedCandidates([]);
+    localStorage.removeItem(SWIPEHIRE_LIKED_KEY);
   }, []);
 
   useEffect(() => {
@@ -51,9 +68,11 @@ export default function SwipeExperience() {
   const clearDeck = () => {
     localStorage.removeItem(SWIPEHIRE_CANDIDATES_KEY);
     localStorage.removeItem(SWIPEHIRE_LIKED_KEY);
+    localStorage.removeItem(SWIPEHIRE_JOB_OFFER_KEY);
     setCandidates([]);
     setLikedCandidates([]);
     setDiscardedCandidates([]);
+    setJobOffer('');
   };
 
   const restart = () => {
@@ -124,7 +143,7 @@ export default function SwipeExperience() {
         <div className="min-h-0 rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/65 to-slate-950/65 p-4 shadow-2xl backdrop-blur">
           {!hasFinishedDeck ? (
             <div className="flex h-full items-center justify-center">
-              <SwipeCardStack candidates={candidates} onSwipe={onSwipe} />
+              <SwipeCardStack candidates={candidates} onSwipe={onSwipe} jobOffer={jobOffer} />
             </div>
           ) : (
             <div className="h-full overflow-y-auto pr-1">
@@ -137,8 +156,9 @@ export default function SwipeExperience() {
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Session Quality</h2>
           <div className="mt-4 space-y-3 text-sm">
             <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-3">
-              <p className="text-indigo-200">Deck size</p>
-              <p className="text-2xl font-black text-indigo-300">{total}</p>
+              <p className="text-indigo-200">Deck in queue</p>
+              <p className="text-2xl font-black text-indigo-300">{remaining}</p>
+              <p className="mt-0.5 text-[11px] text-indigo-200/80">from {total} total candidates</p>
             </div>
             <div className="rounded-2xl border border-slate-700 bg-slate-950/60 p-3">
               <p className="text-slate-300">Current focus</p>

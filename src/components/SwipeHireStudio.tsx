@@ -4,7 +4,7 @@ import CVInput from './CVInput';
 import JobInput from './JobInput';
 import { checkHealth, matchCustomCvs } from '../lib/api';
 import { buildCandidatesLocal, mockCvs, mockJobOffer, parseCvs } from '../lib/matching';
-import { SWIPEHIRE_CANDIDATES_KEY } from '../lib/storage';
+import { SWIPEHIRE_CANDIDATES_KEY, SWIPEHIRE_JOB_OFFER_KEY } from '../lib/storage';
 
 type AnalysisMode = 'idle' | 'checking' | 'scoring-ai' | 'scoring-local' | 'done' | 'error';
 
@@ -32,6 +32,7 @@ export default function SwipeHireStudio() {
           setMode('scoring-ai');
           const candidates = await matchCustomCvs(jobOffer, cvs, cvs.length);
           localStorage.setItem(SWIPEHIRE_CANDIDATES_KEY, JSON.stringify(candidates));
+          localStorage.setItem(SWIPEHIRE_JOB_OFFER_KEY, jobOffer);
           setMode('done');
           window.location.href = '/swipe';
           return;
@@ -43,6 +44,7 @@ export default function SwipeHireStudio() {
       await new Promise((r) => setTimeout(r, 400));
       const candidates = buildCandidatesLocal(jobOffer, cvs);
       localStorage.setItem(SWIPEHIRE_CANDIDATES_KEY, JSON.stringify(candidates));
+      localStorage.setItem(SWIPEHIRE_JOB_OFFER_KEY, jobOffer);
       setMode('done');
       window.location.href = '/swipe';
     } catch (err) {

@@ -1,0 +1,1027 @@
+<section class="flow container" id="demo-flow">
+  <div class="flow-card">
+    <div class="flow-header">
+      <div>
+        <p class="eyebrow">Premium demo workspace</p>
+        <h2 class="flow-title">Guided Matching Pipeline</h2>
+      </div>
+      <span class="status-chip">Live demo</span>
+    </div>
+    <div class="flow-steps">
+      <span data-step-pill class="step-pill active">1. Login</span>
+      <span data-step-pill class="step-pill">2. Job</span>
+      <span data-step-pill class="step-pill">3. Candidates</span>
+      <span data-step-pill class="step-pill">4. Matches</span>
+    </div>
+
+    <section data-step="1" class="step-screen active">
+      <p class="eyebrow">Demo access</p>
+      <h3>Login to continue</h3>
+      <p class="copy">Use any email/password. Demo account access always succeeds.</p>
+      <div class="grid">
+        <label>
+          Email
+          <input id="demo-email" type="email" placeholder="demo@swipehire.ai" />
+        </label>
+        <label>
+          Password
+          <input id="demo-password" type="password" placeholder="••••••••" />
+        </label>
+      </div>
+      <p class="hint">Suggested demo account: <b>demo@swipehire.ai / demo1234</b></p>
+      <button class="btn btn-primary" id="login-btn">Login</button>
+    </section>
+
+    <section data-step="2" class="step-screen">
+      <p class="eyebrow">Role definition</p>
+      <h3>Upload the job description</h3>
+      <p class="copy">Paste the role text or upload a `.txt`/`.md` file.</p>
+      <label>
+        Job title
+        <input id="job-title" type="text" placeholder="Senior Frontend Engineer" />
+      </label>
+      <label>
+        Job description
+        <textarea
+          id="job-description"
+          rows="8"
+          placeholder="Paste the job description here..."
+        ></textarea>
+      </label>
+      <label class="file-label">
+        <span>Upload description file</span>
+        <input id="job-file" type="file" accept=".txt,.md,.csv,text/plain,text/markdown" />
+      </label>
+      <div class="actions">
+        <button class="btn" data-back="1">Back</button>
+        <button class="btn btn-primary" id="save-job-btn">Continue</button>
+      </div>
+    </section>
+
+    <section data-step="3" class="step-screen">
+      <p class="eyebrow">Candidate pool</p>
+      <h3>Upload candidates</h3>
+      <p class="copy">
+        Add one candidate per line using this format:
+        <code>Name | role | skills comma-separated</code>
+      </p>
+      <label>
+        Candidates
+        <textarea
+          id="candidates-input"
+          rows="9"
+          placeholder="Sofia Alvarez | Frontend Engineer | React, TypeScript, Tailwind, A/B Testing"
+        ></textarea>
+      </label>
+      <label class="file-label">
+        <span>Upload candidates file</span>
+        <input id="candidates-file" type="file" accept=".txt,.csv,text/plain,text/csv" />
+      </label>
+      <div class="actions">
+        <button class="btn" data-back="2">Back</button>
+        <button class="btn btn-primary" id="match-btn">Show matches</button>
+      </div>
+    </section>
+
+    <section data-step="4" class="step-screen">
+      <p class="eyebrow">Matching results</p>
+      <h3>Swipe your top matches</h3>
+      <p class="copy" id="results-caption"></p>
+      <div class="swipe-shell">
+        <div class="swipe-stack-wrap">
+          <div class="status-overlay status-like" id="status-like">LIKE</div>
+          <div class="status-overlay status-nope" id="status-nope">NOPE</div>
+          <div id="results-stack" class="results-stack"></div>
+          <div class="swipe-empty" id="swipe-empty" hidden>
+            <p>No more candidates in this stack.</p>
+            <button class="btn btn-primary" id="restart-swipes">Restart swipes</button>
+          </div>
+        </div>
+        <div class="swipe-dock">
+          <button class="swipe-btn swipe-btn-nope" id="swipe-nope" aria-label="Reject">✕</button>
+          <button class="swipe-btn swipe-btn-like" id="swipe-like" aria-label="Like">♥</button>
+        </div>
+      </div>
+      <div class="swipe-log card">
+        <p class="log-title">Swipe decisions</p>
+        <ul id="swipe-log-list"></ul>
+      </div>
+      <div class="actions">
+        <button class="btn" data-back="3">Back</button>
+        <button class="btn btn-primary" id="restart-flow">Run new matching</button>
+      </div>
+    </section>
+  </div>
+</section>
+
+<script>
+  import Chart from "chart.js/auto";
+
+  const stepPills = Array.from(document.querySelectorAll("[data-step-pill]"));
+  const stepScreens = Array.from(document.querySelectorAll("[data-step]"));
+
+  const loginBtn = document.getElementById("login-btn");
+  const saveJobBtn = document.getElementById("save-job-btn");
+  const matchBtn = document.getElementById("match-btn");
+  const restartFlowBtn = document.getElementById("restart-flow");
+
+  const jobFile = document.getElementById("job-file");
+  const jobDescription = document.getElementById("job-description");
+  const candidatesFile = document.getElementById("candidates-file");
+  const candidatesInput = document.getElementById("candidates-input");
+
+  const emailInput = document.getElementById("demo-email");
+  const passwordInput = document.getElementById("demo-password");
+  const jobTitleInput = document.getElementById("job-title");
+  const resultsCaption = document.getElementById("results-caption");
+  const resultsStack = document.getElementById("results-stack");
+  const swipeEmpty = document.getElementById("swipe-empty");
+  const swipeNope = document.getElementById("swipe-nope");
+  const swipeLike = document.getElementById("swipe-like");
+  const restartSwipesBtn = document.getElementById("restart-swipes");
+  const swipeLogList = document.getElementById("swipe-log-list");
+  const likeOverlay = document.getElementById("status-like");
+  const nopeOverlay = document.getElementById("status-nope");
+
+  let appState = {
+    email: "",
+    jobTitle: "",
+    jobDescription: "",
+    candidatesRaw: "",
+  };
+  let matchResults = [];
+  let activeSwipeIndex = 0;
+  let swipeDecisions = [];
+  let radarCharts = [];
+
+  const AXES = {
+    frontend: ["react", "vue", "angular", "typescript", "javascript", "css", "ui", "frontend"],
+    backend: ["node", "java", "python", "api", "graphql", "backend", "microservices", "sql"],
+    data_ai: ["ml", "ai", "nlp", "data", "analytics", "model", "experiment", "statistics"],
+    cloud_ops: ["aws", "gcp", "azure", "docker", "kubernetes", "devops", "terraform", "ci"],
+    product: ["ab", "testing", "roadmap", "stakeholder", "product", "growth", "metrics", "ux"],
+  };
+
+  const DEFAULT_JOB_TITLE = "Senior Frontend Engineer (React + Product Focus)";
+  const DEFAULT_JOB_DESCRIPTION = `We are hiring a Senior Frontend Engineer to build product-facing web experiences.
+Core requirements:
+- React and TypeScript in production
+- Design systems and reusable UI components
+- A/B testing and experimentation
+- Performance optimization and analytics
+- Collaboration with product and UX
+- APIs and integration with backend services
+- Cloud deployment awareness (AWS or similar)
+Nice to have:
+- Growth mindset and metric-driven iterations
+- Hands-on experience shipping at scale`;
+
+  // Format: Name | role | skills comma-separated | optional fixed demo score
+  const DEFAULT_CANDIDATES = `Sofia Alvarez | Senior Frontend Engineer | React, TypeScript, Design Systems, A/B Testing, Performance, UX, Product Metrics | 100
+Lucas Martin | Principal Frontend Engineer | React, TypeScript, Component Libraries, Experimentation, UX, Analytics, APIs | 100
+Emma Rossi | Frontend Product Engineer | React, TypeScript, A/B Testing, Growth, UX, Metrics, APIs | 95
+Noah Becker | Full-Stack Engineer | React, TypeScript, Node, APIs, AWS, Performance, Analytics | 93
+Mia Dubois | Frontend Developer | React, JavaScript, CSS, UX, APIs, Jira | 90
+Oliver Grant | QA Automation Engineer | Cypress, Playwright, Test Automation, CI/CD, API Testing | 34
+Ava Lindholm | Scrum Master | Agile, Stakeholder Management, Delivery, Planning, Team Coaching | 31
+Victor Stone | Hardware Technician | Embedded Systems, PCB Repair, Soldering, Device Diagnostics | 0`;
+
+  const showStep = (stepNumber) => {
+    stepPills.forEach((pill, idx) => pill.classList.toggle("active", idx < stepNumber));
+    stepScreens.forEach((screen) => {
+      const isActive = Number(screen.dataset.step) === stepNumber;
+      screen.classList.toggle("active", isActive);
+    });
+  };
+
+  const readTextFile = async (file) => {
+    if (!file) return "";
+    return await file.text();
+  };
+
+  const tokenize = (text) =>
+    (text || "")
+      .toLowerCase()
+      .split(/[^a-z0-9+#.]+/g)
+      .filter((token) => token.length > 2);
+
+  const unique = (values) => Array.from(new Set(values));
+
+  const parseCandidates = (rawText) => {
+    return rawText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const parts = line.split("|").map((part) => part.trim());
+        const name = parts[0] || "Candidate";
+        const role = parts[1] || "Generalist";
+        const skills = (parts[2] || parts.slice(1).join(","))
+          .split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean);
+        const fixedScore = Number(parts[3]);
+        return {
+          name,
+          role,
+          skills,
+          raw: line,
+          fixedScore: Number.isFinite(fixedScore) ? Math.max(0, Math.min(100, fixedScore)) : null,
+        };
+      });
+  };
+
+  const axisScores = (jobTokens, candidateTokens) => {
+    const jobSet = new Set(jobTokens);
+    const candidateSet = new Set(candidateTokens);
+    const entries = Object.entries(AXES).map(([axis, keywords]) => {
+      const relevant = keywords.filter((keyword) => jobSet.has(keyword));
+      const denominator = Math.max(relevant.length, 1);
+      const hits = (relevant.length ? relevant : keywords.filter((k) => candidateSet.has(k))).filter((keyword) =>
+        candidateSet.has(keyword),
+      ).length;
+      const value = Math.max(15, Math.min(100, Math.round((hits / denominator) * 100)));
+      return { axis, value };
+    });
+    return entries;
+  };
+
+  const scoreCandidates = (jobText, candidates) => {
+    const jobTokens = unique(tokenize(jobText));
+    const jobSet = new Set(jobTokens);
+
+    return candidates
+      .map((candidate) => {
+        const candidateTokens = unique(tokenize(`${candidate.role} ${candidate.skills.join(" ")}`));
+        const overlap = candidateTokens.filter((token) => jobSet.has(token));
+        const score = Math.round((overlap.length / Math.max(jobSet.size, 1)) * 100);
+        const radar = axisScores(jobTokens, candidateTokens);
+        return {
+          ...candidate,
+          score:
+            typeof candidate.fixedScore === "number"
+              ? candidate.fixedScore
+              : Math.max(0, Math.min(100, score)),
+          matched: overlap.slice(0, 6),
+          radar,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+  };
+
+  const radarCanvas = (index) => `<canvas class="radar-canvas" id="radar-${index}" aria-label="Skills radar chart"></canvas>`;
+
+  const renderRadarCharts = (results) => {
+    radarCharts.forEach((chart) => chart.destroy());
+    radarCharts = [];
+    results.forEach((candidate, idx) => {
+      const canvas = document.getElementById(`radar-${idx}`);
+      if (!canvas) return;
+      const labels = candidate.radar.map((r) => r.axis.replace("_", " ").toUpperCase());
+      const values = candidate.radar.map((r) => r.value);
+      const chart = new Chart(canvas, {
+        type: "radar",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              borderColor: "#2563eb",
+              backgroundColor: "rgba(37, 99, 235, 0.2)",
+              pointBackgroundColor: "#1d4ed8",
+              pointRadius: 2.5,
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+          },
+          scales: {
+            r: {
+              min: 0,
+              max: 100,
+              ticks: { display: false, stepSize: 20 },
+              pointLabels: {
+                color: "#64748b",
+                font: { size: 10, weight: "700" },
+              },
+              grid: { color: "rgba(148, 163, 184, 0.35)" },
+              angleLines: { color: "rgba(148, 163, 184, 0.28)" },
+            },
+          },
+        },
+      });
+      radarCharts.push(chart);
+    });
+  };
+
+  const renderSwipeLog = () => {
+    swipeLogList.innerHTML = swipeDecisions
+      .map(
+        (entry) =>
+          `<li><span class="log-badge ${entry.action === "LIKE" ? "ok" : "no"}">${entry.action}</span>${entry.name}</li>`,
+      )
+      .join("");
+  };
+
+  const getActiveCard = () => resultsStack.querySelector(`[data-index="${activeSwipeIndex}"]`);
+
+  const hideOverlays = () => {
+    likeOverlay.style.opacity = "0";
+    nopeOverlay.style.opacity = "0";
+  };
+
+  const onDecision = (action, candidate) => {
+    swipeDecisions.unshift({ action, name: candidate.name });
+    swipeDecisions = swipeDecisions.slice(0, 8);
+    renderSwipeLog();
+  };
+
+  const animateOut = (direction) => {
+    const card = getActiveCard();
+    if (!card) return;
+    const candidate = matchResults[activeSwipeIndex];
+    const x = direction === "right" ? 460 : -460;
+    card.style.transition = "transform .28s ease, opacity .28s ease";
+    card.style.transform = `translateX(${x}px) rotate(${direction === "right" ? 15 : -15}deg)`;
+    card.style.opacity = "0";
+    onDecision(direction === "right" ? "LIKE" : "NOPE", candidate);
+    activeSwipeIndex += 1;
+    setTimeout(() => {
+      card.hidden = true;
+      hideOverlays();
+      if (activeSwipeIndex >= matchResults.length) swipeEmpty.hidden = false;
+    }, 280);
+  };
+
+  const bindSwipeDrag = () => {
+    let dragging = false;
+    let startX = 0;
+    let currentX = 0;
+    let draggingCard = null;
+
+    const getX = (event) => (event.touches ? event.touches[0].clientX : event.clientX);
+
+    const onStart = (event) => {
+      const card = getActiveCard();
+      if (!card) return;
+      const targetCard = event.target.closest("[data-card]");
+      if (targetCard !== card) return;
+      dragging = true;
+      draggingCard = card;
+      draggingCard.style.transition = "none";
+      startX = getX(event);
+      currentX = 0;
+    };
+
+    const onMove = (event) => {
+      if (!dragging || !draggingCard) return;
+      currentX = getX(event) - startX;
+      draggingCard.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.05}deg)`;
+      const opacity = Math.min(Math.abs(currentX) / 130, 1);
+      if (currentX > 0) {
+        likeOverlay.style.opacity = String(opacity);
+        nopeOverlay.style.opacity = "0";
+      } else {
+        nopeOverlay.style.opacity = String(opacity);
+        likeOverlay.style.opacity = "0";
+      }
+    };
+
+    const onEnd = () => {
+      if (!dragging || !draggingCard) return;
+      dragging = false;
+      if (currentX > 120) animateOut("right");
+      else if (currentX < -120) animateOut("left");
+      else {
+        draggingCard.style.transition = "transform .2s ease";
+        draggingCard.style.transform = "translateX(0) rotate(0)";
+        hideOverlays();
+      }
+      draggingCard = null;
+    };
+
+    resultsStack.querySelectorAll("[data-card]").forEach((card) => {
+      card.addEventListener("mousedown", onStart);
+      card.addEventListener("touchstart", onStart, { passive: true });
+    });
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove, { passive: true });
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchend", onEnd);
+  };
+
+  const renderSwipeStack = (results) => {
+    resultsStack.innerHTML = "";
+    swipeLogList.innerHTML = "";
+    swipeDecisions = [];
+    activeSwipeIndex = 0;
+    swipeEmpty.hidden = true;
+    hideOverlays();
+
+    results.forEach((candidate, idx) => {
+      const card = document.createElement("article");
+      card.className = "swipe-card";
+      card.dataset.card = "true";
+      card.dataset.index = String(idx);
+      card.style.zIndex = String(100 - idx);
+      card.style.transform = `translateY(${idx * 8}px) scale(${1 - idx * 0.02})`;
+      card.innerHTML = `
+        <div class="swipe-card-top">
+          <p class="swipe-rank">#${idx + 1}</p>
+          <p class="swipe-score">${candidate.score}% match</p>
+        </div>
+        <h4>${candidate.name}</h4>
+        <p class="swipe-role">${candidate.role}</p>
+        <div class="radar-wrap">${radarCanvas(idx)}</div>
+        <p class="swipe-subtitle">Skills</p>
+        <div class="skill-chips">${candidate.skills.map((skill) => `<span>${skill}</span>`).join("")}</div>
+        <p class="swipe-subtitle">Matching keywords</p>
+        <p class="swipe-matched">${candidate.matched.join(", ") || "No direct overlap found"}</p>
+      `;
+      resultsStack.appendChild(card);
+    });
+
+    if (results.length === 0) {
+      swipeEmpty.querySelector("p").textContent = "No candidates loaded yet.";
+      swipeEmpty.hidden = false;
+      return;
+    }
+
+    swipeEmpty.querySelector("p").textContent = "No more candidates in this stack.";
+    renderRadarCharts(results);
+    bindSwipeDrag();
+  };
+
+  document.querySelectorAll("[data-back]").forEach((button) => {
+    button.addEventListener("click", () => showStep(Number(button.dataset.back)));
+  });
+
+  loginBtn?.addEventListener("click", () => {
+    appState.email = emailInput?.value.trim() || "demo@swipehire.ai";
+    passwordInput.value = "";
+    showStep(2);
+  });
+
+  jobFile?.addEventListener("change", async () => {
+    const content = await readTextFile(jobFile.files?.[0]);
+    if (content) jobDescription.value = content;
+  });
+
+  saveJobBtn?.addEventListener("click", () => {
+    const jobTitle = jobTitleInput?.value.trim();
+    const description = jobDescription?.value.trim();
+    if (!description) {
+      alert("Please add a job description before continuing.");
+      return;
+    }
+    appState.jobTitle = jobTitle || "New role";
+    appState.jobDescription = description;
+    showStep(3);
+  });
+
+  candidatesFile?.addEventListener("change", async () => {
+    const content = await readTextFile(candidatesFile.files?.[0]);
+    if (content) candidatesInput.value = content;
+  });
+
+  matchBtn?.addEventListener("click", () => {
+    const raw = candidatesInput?.value.trim();
+    if (!raw) {
+      alert("Please upload or paste candidate lines before matching.");
+      return;
+    }
+    appState.candidatesRaw = raw;
+    const candidates = parseCandidates(raw);
+    if (!candidates.length) {
+      alert("Candidates format invalid. Use: Name | role | skill1, skill2");
+      return;
+    }
+
+    const results = scoreCandidates(appState.jobDescription, candidates);
+    resultsCaption.textContent = `${appState.jobTitle} · ${results.length} candidates analyzed for ${appState.email}`;
+    matchResults = results;
+    renderSwipeStack(results);
+    showStep(4);
+  });
+
+  swipeLike?.addEventListener("click", () => animateOut("right"));
+  swipeNope?.addEventListener("click", () => animateOut("left"));
+  restartSwipesBtn?.addEventListener("click", () => {
+    renderSwipeStack(matchResults);
+  });
+
+  restartFlowBtn?.addEventListener("click", () => {
+    appState = { email: "", jobTitle: "", jobDescription: "", candidatesRaw: "" };
+    emailInput.value = "demo@swipehire.ai";
+    passwordInput.value = "";
+    jobTitleInput.value = DEFAULT_JOB_TITLE;
+    jobDescription.value = DEFAULT_JOB_DESCRIPTION;
+    candidatesInput.value = DEFAULT_CANDIDATES;
+    if (jobFile) jobFile.value = "";
+    if (candidatesFile) candidatesFile.value = "";
+    resultsStack.innerHTML = "";
+    swipeLogList.innerHTML = "";
+    radarCharts.forEach((chart) => chart.destroy());
+    radarCharts = [];
+    resultsCaption.textContent = "";
+    matchResults = [];
+    activeSwipeIndex = 0;
+    swipeDecisions = [];
+    swipeEmpty.hidden = true;
+    hideOverlays();
+    showStep(1);
+  });
+
+  window.addEventListener("keydown", (event) => {
+    const isStep4Active = document.querySelector('[data-step="4"]')?.classList.contains("active");
+    if (!isStep4Active) return;
+    if (event.key.toLowerCase() === "a" || event.key === "ArrowLeft") animateOut("left");
+    if (event.key.toLowerCase() === "d" || event.key === "ArrowRight") animateOut("right");
+  });
+
+  // Preload demo content so the flow works out of the box.
+  if (emailInput) emailInput.value = "demo@swipehire.ai";
+  if (jobTitleInput) jobTitleInput.value = DEFAULT_JOB_TITLE;
+  if (jobDescription) jobDescription.value = DEFAULT_JOB_DESCRIPTION;
+  if (candidatesInput) candidatesInput.value = DEFAULT_CANDIDATES;
+</script>
+
+<style>
+  .flow {
+    padding: 1rem 0 2.8rem;
+  }
+
+  .flow-card {
+    border: 1px solid rgba(148, 163, 184, 0.32);
+    border-radius: 1.35rem;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(99, 102, 241, 0.08), transparent 36%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.96));
+    box-shadow:
+      0 28px 56px rgba(15, 23, 42, 0.1),
+      0 8px 20px rgba(15, 23, 42, 0.06);
+    padding: 1.25rem;
+  }
+
+  .flow-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 0.1rem;
+  }
+
+  .flow-title {
+    margin: 0.2rem 0 0;
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .status-chip {
+    border: 1px solid rgba(37, 99, 235, 0.22);
+    background: rgba(37, 99, 235, 0.08);
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 0.38rem 0.75rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .flow-steps {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.2rem;
+    padding: 0.15rem;
+  }
+
+  .step-pill {
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+    padding: 0.38rem 0.72rem;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.78);
+  }
+
+  .step-pill.active {
+    color: #1e3a8a;
+    border-color: rgba(147, 197, 253, 0.8);
+    background: linear-gradient(180deg, #eff6ff, #dbeafe);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+  }
+
+  .step-screen {
+    display: none;
+    gap: 0.9rem;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.72);
+    padding: 1rem;
+  }
+
+  .step-screen.active {
+    display: grid;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: clamp(1.22rem, 1rem + 0.8vw, 1.52rem);
+    letter-spacing: -0.02em;
+  }
+
+  .eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    font-weight: 800;
+    color: #6366f1;
+  }
+
+  .copy {
+    margin: 0;
+    color: #475569;
+    max-width: 72ch;
+    line-height: 1.65;
+  }
+
+  .hint {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.88rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  label {
+    display: grid;
+    gap: 0.42rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: 0.01em;
+  }
+
+  input,
+  textarea {
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    border-radius: 0.78rem;
+    padding: 0.72rem 0.78rem;
+    font: inherit;
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.92);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.65);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 7.5rem;
+  }
+
+  .file-label input {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-top: 0.45rem;
+  }
+
+  .results-list {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .swipe-shell {
+    margin-top: 0.35rem;
+    display: grid;
+    gap: 1rem;
+    place-items: center;
+    width: 100%;
+  }
+
+  .swipe-stack-wrap {
+    position: relative;
+    width: min(780px, 100%);
+    height: min(72vh, 680px);
+    border-radius: 1.2rem;
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 1.1rem 1.1rem 6rem;
+    box-shadow:
+      0 20px 40px rgba(15, 23, 42, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .results-stack {
+    position: relative;
+    height: 100%;
+  }
+
+  .swipe-card {
+    position: absolute;
+    inset: 0.3rem;
+    background: #fff;
+    border-radius: 1rem;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    padding: 1rem;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    display: grid;
+    align-content: start;
+    gap: 0.55rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
+  }
+
+  .swipe-card:active {
+    cursor: grabbing;
+  }
+
+  .swipe-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .swipe-rank {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    text-transform: uppercase;
+  }
+
+  .swipe-score {
+    margin: 0;
+    padding: 0.2rem 0.52rem;
+    border-radius: 999px;
+    border: 1px solid rgba(147, 197, 253, 0.7);
+    background: rgba(239, 246, 255, 0.92);
+    color: #1d4ed8;
+    font-size: 0.8rem;
+    font-weight: 900;
+  }
+
+  .swipe-card h4 {
+    margin: 0.25rem 0 0;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+  }
+
+  .swipe-role {
+    margin: 0;
+    color: #475569;
+    font-size: 0.96rem;
+  }
+
+  .radar-wrap {
+    margin: 0.4rem 0;
+    border-radius: 0.85rem;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    background: #fbfdff;
+    display: grid;
+    place-items: center;
+    min-height: 220px;
+    padding: 0.4rem;
+  }
+
+  .radar-canvas {
+    width: 100%;
+    max-width: 360px;
+    height: 200px;
+  }
+
+  .swipe-subtitle {
+    margin: 0.2rem 0 0;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #64748b;
+  }
+
+  .skill-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.34rem;
+  }
+
+  .skill-chips span {
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.24rem 0.52rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #334155;
+  }
+
+  .swipe-matched {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.55;
+  }
+
+  .status-overlay {
+    position: absolute;
+    top: 1.5rem;
+    z-index: 120;
+    opacity: 0;
+    pointer-events: none;
+    padding: 0.3rem 0.74rem;
+    border-radius: 0.5rem;
+    font-size: 1.06rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+  }
+
+  .status-like {
+    right: 1.2rem;
+    color: #047857;
+    border: 2px solid rgba(16, 185, 129, 0.95);
+    background: rgba(16, 185, 129, 0.2);
+    transform: rotate(12deg);
+  }
+
+  .status-nope {
+    left: 1.2rem;
+    color: #be123c;
+    border: 2px solid rgba(244, 63, 94, 0.95);
+    background: rgba(244, 63, 94, 0.2);
+    transform: rotate(-12deg);
+  }
+
+  .swipe-empty {
+    position: absolute;
+    inset: 1rem;
+    border-radius: 0.9rem;
+    background: #fff;
+    border: 1px dashed rgba(148, 163, 184, 0.8);
+    display: grid;
+    place-content: center;
+    gap: 0.8rem;
+    text-align: center;
+    z-index: 80;
+  }
+
+  .swipe-empty[hidden] {
+    display: none !important;
+  }
+
+  .swipe-dock {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    position: absolute;
+    bottom: 1.1rem;
+    left: 0;
+    right: 0;
+    z-index: 140;
+  }
+
+  .swipe-btn {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    border: 1px solid rgba(203, 213, 225, 0.95);
+    background: #fff;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: 900;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  .swipe-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.2);
+  }
+
+  .swipe-btn-nope {
+    color: #e11d48;
+  }
+
+  .swipe-btn-like {
+    color: #059669;
+  }
+
+  .swipe-log {
+    padding: 0.8rem;
+    margin-top: 0.35rem;
+  }
+
+  .log-title {
+    margin: 0 0 0.55rem;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    font-weight: 800;
+  }
+
+  .swipe-log ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .swipe-log li {
+    font-size: 0.86rem;
+    color: #334155;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .log-badge {
+    border-radius: 999px;
+    padding: 0.14rem 0.42rem;
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.07em;
+  }
+
+  .log-badge.ok {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.14);
+  }
+
+  .log-badge.no {
+    color: #be123c;
+    background: rgba(244, 63, 94, 0.14);
+  }
+
+  code {
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: rgba(248, 250, 252, 0.96);
+    border-radius: 0.45rem;
+    padding: 0.12rem 0.35rem;
+    font-size: 0.82em;
+  }
+
+  @media (max-width: 720px) {
+    .flow-card {
+      padding: 1rem;
+    }
+
+    .flow-header {
+      align-items: start;
+      flex-direction: column;
+    }
+
+    .swipe-stack-wrap {
+      width: 100%;
+      height: min(74vh, 640px);
+      padding: 0.8rem 0.8rem 5.6rem;
+    }
+
+    .radar-wrap {
+      min-height: 185px;
+    }
+
+    .radar-canvas {
+      height: 168px;
+    }
+  }
+</style>
