@@ -1,0 +1,560 @@
+---
+const candidates = [
+  {
+    name: "Sofia Alvarez",
+    role: "Senior Frontend Engineer",
+    location: "Madrid, ES",
+    match: 94,
+    skills: ["React", "TypeScript", "Design Systems", "A/B Testing"],
+    summary: "Built growth-focused product UIs serving 1M+ monthly active users.",
+  },
+  {
+    name: "Daniel Kim",
+    role: "Full-Stack Developer",
+    location: "Berlin, DE",
+    match: 89,
+    skills: ["Node.js", "PostgreSQL", "AWS", "GraphQL"],
+    summary: "Scaled marketplace backend and cut API latency by 38%.",
+  },
+  {
+    name: "Priya Sharma",
+    role: "ML Product Analyst",
+    location: "Remote",
+    match: 86,
+    skills: ["Python", "NLP", "Experimentation", "Dashboards"],
+    summary: "Owned matching quality metrics and recruiter productivity analytics.",
+  },
+  {
+    name: "Marco Rossi",
+    role: "Talent Ops Specialist",
+    location: "Milan, IT",
+    match: 82,
+    skills: ["ATS", "Hiring Ops", "Process Automation", "Stakeholder Mgmt"],
+    summary: "Optimized hiring funnel and reduced time-to-hire by 25%.",
+  },
+];
+---
+
+<section id="matcher" class="matcher-section container">
+  <div class="matcher-head">
+    <p class="eyebrow">Swipe-first evaluation flow</p>
+    <h2 class="section-title">Review candidates card-by-card</h2>
+    <p class="section-copy">
+      Drag cards left to reject and right to shortlist. Fast decisions, clear history, and
+      recruiter-first UX.
+    </p>
+  </div>
+
+  <div class="matcher-grid">
+    <div class="matcher-stage">
+      <div class="matcher-stack">
+        <div class="status-overlay status-like" id="status-like">LIKE</div>
+        <div class="status-overlay status-nope" id="status-nope">NOPE</div>
+        {
+          candidates.map((candidate, idx) => (
+            <article
+              class="candidate-card"
+              data-card
+              data-index={idx}
+              style={`z-index:${50 - idx}; transform: translateY(${idx * 8}px) scale(${1 - idx * 0.02});`}
+            >
+              <div class="candidate-media">
+                <div class="candidate-avatar">{candidate.name.split(" ").map((n) => n[0]).join("")}</div>
+                <div class="match-pill">{candidate.match}% match</div>
+              </div>
+              <div class="candidate-content">
+                <header class="candidate-header">
+                  <div>
+                    <p class="candidate-name">{candidate.name}</p>
+                    <p class="candidate-role">{candidate.role}</p>
+                  </div>
+                </header>
+                <p class="candidate-location">{candidate.location}</p>
+                <p class="candidate-summary">{candidate.summary}</p>
+                <ul class="skills">
+                  {candidate.skills.map((skill) => <li>{skill}</li>)}
+                </ul>
+              </div>
+            </article>
+          ))
+        }
+        <div class="matcher-empty" id="matcher-empty" hidden>
+          <p>Done! You reviewed all candidates.</p>
+          <button class="btn btn-primary" id="restart-swipes">Restart stack</button>
+        </div>
+        <div class="action-dock">
+          <button class="swipe-btn swipe-btn-rewind" id="btn-restart" aria-label="Restart">↺</button>
+          <button class="swipe-btn swipe-btn-nope" id="btn-nope" aria-label="Reject">✕</button>
+          <button class="swipe-btn swipe-btn-like" id="btn-like" aria-label="Like">♥</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="matcher-panel card">
+      <h3>Decision controls</h3>
+      <p class="section-copy">
+        Drag card left or right, or use actions below. Keyboard support: <b>A</b> reject, <b>D</b>
+        like.
+      </p>
+      <p class="helper-note">Use the bottom action buttons or swipe directly on the card.</p>
+      <div class="decision-log" id="decision-log">
+        <p class="decision-log-title">Latest decisions</p>
+        <ul id="decision-list"></ul>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<script>
+  const cards = Array.from(document.querySelectorAll("[data-card]"));
+  const btnLike = document.getElementById("btn-like");
+  const btnNope = document.getElementById("btn-nope");
+  const likeOverlay = document.getElementById("status-like");
+  const nopeOverlay = document.getElementById("status-nope");
+  const emptyState = document.getElementById("matcher-empty");
+  const restartBtn = document.getElementById("restart-swipes");
+  const restartMiniBtn = document.getElementById("btn-restart");
+  const decisionList = document.getElementById("decision-list");
+
+  let activeIndex = 0;
+  let decisions = [];
+
+  const getActiveCard = () => cards[activeIndex];
+
+  const addDecision = (label, card) => {
+    const name = card.querySelector(".candidate-name")?.textContent || "Candidate";
+    decisions.unshift({ label, name });
+    if (decisions.length > 6) decisions = decisions.slice(0, 6);
+    decisionList.innerHTML = decisions
+      .map(
+        (item) =>
+          `<li><span class="decision-badge ${item.label === "LIKE" ? "ok" : "no"}">${item.label}</span>${item.name}</li>`,
+      )
+      .join("");
+  };
+
+  const showEmpty = () => {
+    if (activeIndex >= cards.length) emptyState.hidden = false;
+  };
+
+  const hideOverlays = () => {
+    likeOverlay.style.opacity = "0";
+    nopeOverlay.style.opacity = "0";
+  };
+
+  const animateOut = (direction) => {
+    const card = getActiveCard();
+    if (!card) return;
+    const x = direction === "right" ? 420 : -420;
+    card.style.transition = "transform .28s ease, opacity .28s ease";
+    card.style.transform = `translateX(${x}px) rotate(${direction === "right" ? 16 : -16}deg)`;
+    card.style.opacity = "0";
+    addDecision(direction === "right" ? "LIKE" : "NOPE", card);
+    activeIndex += 1;
+    setTimeout(() => {
+      card.hidden = true;
+      hideOverlays();
+      showEmpty();
+    }, 280);
+  };
+
+  const resetStack = () => {
+    activeIndex = 0;
+    decisions = [];
+    decisionList.innerHTML = "";
+    cards.forEach((card, idx) => {
+      card.hidden = false;
+      card.style.opacity = "1";
+      card.style.transition = "none";
+      card.style.transform = `translateY(${idx * 8}px) scale(${1 - idx * 0.02})`;
+    });
+    emptyState.hidden = true;
+    hideOverlays();
+  };
+
+  const enableDrag = () => {
+    let startX = 0;
+    let currentX = 0;
+    let dragging = false;
+    let draggingCard = null;
+
+    const getClientX = (event) => (event.touches ? event.touches[0].clientX : event.clientX);
+
+    const onMove = (event) => {
+      if (!dragging || !draggingCard) return;
+      currentX = getClientX(event) - startX;
+      const rotate = currentX * 0.05;
+      draggingCard.style.transform = `translateX(${currentX}px) rotate(${rotate}deg)`;
+      const opacity = Math.min(Math.abs(currentX) / 120, 1);
+      if (currentX > 0) {
+        likeOverlay.style.opacity = String(opacity);
+        nopeOverlay.style.opacity = "0";
+      } else {
+        nopeOverlay.style.opacity = String(opacity);
+        likeOverlay.style.opacity = "0";
+      }
+    };
+
+    const onEnd = () => {
+      if (!dragging || !draggingCard) return;
+      dragging = false;
+      if (currentX > 120) animateOut("right");
+      else if (currentX < -120) animateOut("left");
+      else {
+        draggingCard.style.transition = "transform .2s ease";
+        draggingCard.style.transform = "translateX(0) rotate(0)";
+        hideOverlays();
+      }
+      draggingCard = null;
+    };
+
+    const onStart = (event) => {
+      const activeCard = getActiveCard();
+      if (!activeCard) return;
+      const targetCard = event.target.closest("[data-card]");
+      if (targetCard !== activeCard) return;
+      dragging = true;
+      draggingCard = activeCard;
+      draggingCard.style.transition = "none";
+      startX = getClientX(event);
+      currentX = 0;
+    };
+
+    cards.forEach((card) => {
+      card.addEventListener("mousedown", onStart);
+      card.addEventListener("touchstart", onStart, { passive: true });
+    });
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove, { passive: true });
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchend", onEnd);
+  };
+
+  btnLike?.addEventListener("click", () => animateOut("right"));
+  btnNope?.addEventListener("click", () => animateOut("left"));
+  restartBtn?.addEventListener("click", resetStack);
+  restartMiniBtn?.addEventListener("click", resetStack);
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === "a") animateOut("left");
+    if (event.key.toLowerCase() === "d") animateOut("right");
+  });
+
+  enableDrag();
+</script>
+
+<style>
+  .matcher-section {
+    padding: 2rem 0 4rem;
+  }
+
+  .matcher-head {
+    max-width: 720px;
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6366f1;
+    margin: 0 0 0.75rem;
+  }
+
+  .matcher-grid {
+    display: grid;
+    grid-template-columns: 0.95fr 0.7fr;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .matcher-stage {
+    display: grid;
+    place-items: center;
+  }
+
+  .matcher-stack {
+    position: relative;
+    min-height: 660px;
+    width: min(420px, 90vw);
+    padding: 1rem 1rem 6.6rem;
+    overflow: hidden;
+    border-radius: 2rem;
+    background:
+      radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.18), transparent 28%),
+      linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    box-shadow:
+      0 24px 50px rgba(2, 6, 23, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .status-overlay {
+    position: absolute;
+    top: 2rem;
+    padding: 0.35rem 0.8rem;
+    font-size: 1rem;
+    font-weight: 900;
+    border-radius: 0.55rem;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 80;
+    transition: opacity 0.12s ease;
+    transform: rotate(-12deg);
+  }
+
+  .status-like {
+    right: 1.4rem;
+    background: rgba(16, 185, 129, 0.22);
+    border: 2px solid rgba(16, 185, 129, 0.95);
+    color: #047857;
+    transform: rotate(12deg);
+  }
+
+  .status-nope {
+    left: 1.4rem;
+    background: rgba(244, 63, 94, 0.22);
+    border: 2px solid rgba(244, 63, 94, 0.95);
+    color: #be123c;
+  }
+
+  .candidate-card {
+    position: absolute;
+    inset: 1.1rem;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 1.2rem;
+    padding: 0;
+    user-select: none;
+    cursor: grab;
+    touch-action: none;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 62% 38%;
+  }
+
+  .candidate-card:active {
+    cursor: grabbing;
+  }
+
+  .candidate-media {
+    position: relative;
+    background:
+      radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.28), transparent 32%),
+      radial-gradient(circle at 20% 20%, #fbcfe8, #ec4899 22%, #4f46e5 68%, #1e1b4b 100%);
+    display: grid;
+    place-items: center;
+  }
+
+  .candidate-avatar {
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 900;
+    display: grid;
+    place-items: center;
+    backdrop-filter: blur(5px);
+  }
+
+  .candidate-content {
+    padding: 1rem;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.02), transparent 20%), #fff;
+  }
+
+  .candidate-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .candidate-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .candidate-role {
+    margin: 0.2rem 0 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .match-pill {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    padding: 0.4rem 0.68rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    backdrop-filter: blur(4px);
+  }
+
+  .candidate-location {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .candidate-summary {
+    margin: 1rem 0;
+    line-height: 1.6;
+    color: #334155;
+  }
+
+  .skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .skills li {
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #334155;
+    background: #fff;
+  }
+
+  .matcher-empty {
+    position: absolute;
+    inset: 1.1rem;
+    border-radius: 1.2rem;
+    border: 1px dashed var(--border);
+    display: grid;
+    place-content: center;
+    text-align: center;
+    gap: 0.8rem;
+    background: #fff;
+  }
+
+  .matcher-panel {
+    padding: 1.2rem;
+  }
+
+  .helper-note {
+    font-size: 0.83rem;
+    color: #64748b;
+    margin: 0 0 1rem;
+  }
+
+  .matcher-panel h3 {
+    margin: 0 0 0.6rem;
+    font-size: 1.15rem;
+  }
+
+  .action-dock {
+    position: absolute;
+    bottom: 1.2rem;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 1.1rem;
+    z-index: 90;
+  }
+
+  .swipe-btn {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    font-size: 1.3rem;
+    font-weight: 900;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  .swipe-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+  }
+
+  .swipe-btn-rewind {
+    color: #f59e0b;
+  }
+
+  .swipe-btn-nope {
+    color: #ef4444;
+  }
+
+  .swipe-btn-like {
+    color: #10b981;
+  }
+
+  .decision-log {
+    border-top: 1px solid var(--border);
+    padding-top: 0.9rem;
+  }
+
+  .decision-log-title {
+    margin: 0 0 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .decision-log ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .decision-log li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: #334155;
+  }
+
+  .decision-badge {
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+  }
+
+  .decision-badge.ok {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+  }
+
+  .decision-badge.no {
+    background: rgba(244, 63, 94, 0.12);
+    color: #be123c;
+  }
+
+  @media (max-width: 900px) {
+    .matcher-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .matcher-panel {
+      order: 2;
+    }
+  }
+</style>

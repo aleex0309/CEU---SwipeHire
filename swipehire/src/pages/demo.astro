@@ -1,0 +1,85 @@
+---
+import Layout from "../layouts/Layout.astro";
+import DemoHiringFlow from "../components/DemoHiringFlow.astro";
+---
+
+<Layout
+	title="SwipeHire Demo | Interactive Matcher"
+	description="Interactive swipe matcher demo: reject left, shortlist right."
+>
+	<a href="/" class="back-cta" aria-label="Back to landing">
+		<span aria-hidden="true">←</span>
+		Back to landing
+	</a>
+
+	<section class="demo-hero container">
+		<p class="eyebrow">Interactive product demo</p>
+		<h1>Demo Hiring Flow</h1>
+		<p>
+			Login with a demo account, upload the job description, upload candidates, and review
+			ranked matches.
+		</p>
+	</section>
+
+	<main class="demo-main">
+		<DemoHiringFlow />
+	</main>
+</Layout>
+
+<style>
+	.back-cta {
+		position: fixed;
+		top: 1rem;
+		left: 1rem;
+		z-index: 200;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.52rem 0.8rem;
+		border-radius: 999px;
+		border: 1px solid rgba(148, 163, 184, 0.45);
+		background: rgba(255, 255, 255, 0.92);
+		backdrop-filter: blur(8px);
+		font-size: 0.82rem;
+		font-weight: 800;
+		color: #0f172a;
+		box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+		transition: transform 0.18s ease, box-shadow 0.18s ease;
+	}
+
+	.back-cta:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 16px 28px rgba(15, 23, 42, 0.17);
+	}
+
+	.demo-hero {
+		padding: 4rem 0 0.5rem;
+	}
+
+	.eyebrow {
+		font-size: 0.74rem;
+		font-weight: 800;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: #6366f1;
+		margin: 0 0 0.6rem;
+	}
+
+	.demo-hero h1 {
+		margin: 0;
+		font-size: clamp(1.8rem, 1.2rem + 2vw, 2.8rem);
+		letter-spacing: -0.02em;
+	}
+
+	.demo-hero p {
+		margin: 0.6rem 0 0;
+		max-width: 640px;
+		color: #475569;
+		line-height: 1.7;
+		font-size: clamp(1rem, 0.95rem + 0.35vw, 1.1rem);
+	}
+
+	.demo-main {
+		min-height: calc(100vh - 10rem);
+	}
+</style>
